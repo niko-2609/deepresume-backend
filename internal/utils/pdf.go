@@ -54,7 +54,7 @@ func GeneratePDF(resume models.ResumeContent) ([]byte, error) {
 	pdf.Ln(8)
 	for _, edu := range resume.Education {
 		pdf.SetFont("Arial", "B", 10)
-		pdf.Cell(0, 5, edu.Institution)
+		pdf.Cell(0, 5, edu.School)
 		pdf.Ln(5)
 		pdf.SetFont("Arial", "", 10)
 		pdf.Cell(0, 5, fmt.Sprintf("%s in %s", edu.Degree, edu.Field))
