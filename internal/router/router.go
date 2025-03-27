@@ -7,7 +7,7 @@ import (
 )
 
 // SetupRouter configures all the routes for our application
-func SetupRouter(userHandler *handlers.UserHandler) *gin.Engine {
+func SetupRouter(userHandler *handlers.UserHandler, resumeHandler *handlers.ResumeHandler) *gin.Engine {
 	router := gin.Default()
 
 	// Middleware
@@ -25,6 +25,9 @@ func SetupRouter(userHandler *handlers.UserHandler) *gin.Engine {
 			users.GET("/email/:email", userHandler.GetUserByEmail)
 			users.PUT("/:id", userHandler.UpdateUser)
 		}
+
+		// Resume generation route
+		v1.POST("/generate", resumeHandler.GenerateResume)
 
 		// Onboarding route
 		v1.POST("/onboarding", userHandler.HandleOnboarding)

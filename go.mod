@@ -7,6 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/lib/pq v1.10.9
+	github.com/pgvector/pgvector-go v0.1.1
 	github.com/sirupsen/logrus v1.9.3
 	gorm.io/gorm v1.25.12
 )
