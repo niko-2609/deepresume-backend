@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nikolai/ai-resume-builder/backend/internal/service"
@@ -15,12 +14,6 @@ type ResumeHandler struct {
 
 type GenerateResumeRequest struct {
 	JobDescription string `json:"jobDescription" binding:"required"`
-	Streaming      bool   `json:"streaming"`
-}
-
-type GenerateResumeResponse struct {
-	Resume string `json:"resume"`
-	Source string `json:"source"` // Always "llm"
 }
 
 type StreamChunk struct {
@@ -40,39 +33,6 @@ func (h *ResumeHandler) GenerateResume(c *gin.Context) {
 		return
 	}
 
-	// Check if streaming is requested
-	if req.Streaming {
-		h.streamGenerateResume(c, req.JobDescription)
-		return
-	}
-
-	// Call the service to generate the resume
-	resume, err := h.resumeService.GenerateResume(c.Request.Context(), req.JobDescription)
-	if err != nil {
-		// Check if it's an LLM service error
-		if strings.Contains(err.Error(), "LLM API") {
-			c.JSON(http.StatusServiceUnavailable, gin.H{
-				"error":   "AI service temporarily unavailable, please try again later",
-				"details": err.Error(),
-			})
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Determine response source
-	source := "llm"
-
-	c.JSON(http.StatusOK, GenerateResumeResponse{
-		Resume: resume,
-		Source: source,
-	})
-}
-
-// streamGenerateResume handles streaming resume generation
-func (h *ResumeHandler) streamGenerateResume(c *gin.Context, jobDescription string) {
 	// Set headers for streaming
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
@@ -87,7 +47,7 @@ func (h *ResumeHandler) streamGenerateResume(c *gin.Context, jobDescription stri
 	}
 
 	// Stream the resume generation
-	err := h.resumeService.StreamGenerateResume(c.Request.Context(), jobDescription, func(chunk string, done bool) error {
+	err := h.resumeService.GenerateResume(c.Request.Context(), req.JobDescription, func(chunk string, done bool) error {
 		// Create the chunk response
 		chunkResponse := StreamChunk{
 			Chunk: chunk,
