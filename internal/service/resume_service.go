@@ -24,43 +24,8 @@ func NewResumeService(db interfaces.DB, keywordService *KeywordService, llmServi
 // ResumeStreamHandler is a function that handles streaming resume chunks
 type ResumeStreamHandler func(chunk string, done bool) error
 
-// GenerateResume generates a resume based on the job description
-func (s *ResumeService) GenerateResume(ctx context.Context, jobDescription string) (string, error) {
-	// Extract keywords from job description
-	keywords := s.keywordService.ExtractAndRankKeywords(jobDescription)
-
-	// Prepare keywords for the LLM
-	keywordStrings := make([]string, 0, len(keywords))
-
-	// Use up to 10 keywords, but handle cases where fewer are available
-	maxKeywords := 10
-	if len(keywords) < maxKeywords {
-		maxKeywords = len(keywords)
-	}
-
-	// Safely get the top keywords
-	for _, k := range keywords[:maxKeywords] {
-		keywordStrings = append(keywordStrings, k.Word)
-	}
-
-	// If LLM service is available, use it to generate the resume
-	if s.llmService != nil {
-		// Prepare a prompt for the LLM
-		prompt := s.buildPrompt(keywordStrings, jobDescription)
-
-		// Call the LLM service to generate the resume
-		resume, err := s.llmService.GenerateContent(ctx, "deepseek-coder", prompt)
-		if err != nil {
-			return "", fmt.Errorf("failed to generate resume with LLM: %v", err)
-		}
-		return resume, nil
-	}
-
-	return "", fmt.Errorf("LLM service is not available")
-}
-
-// StreamGenerateResume generates a resume and streams the results to the handler
-func (s *ResumeService) StreamGenerateResume(ctx context.Context, jobDescription string, handler ResumeStreamHandler) error {
+// GenerateResume generates a resume based on the job description and streams the results
+func (s *ResumeService) GenerateResume(ctx context.Context, jobDescription string, handler ResumeStreamHandler) error {
 	// Extract keywords from job description
 	keywords := s.keywordService.ExtractAndRankKeywords(jobDescription)
 
@@ -84,7 +49,7 @@ func (s *ResumeService) StreamGenerateResume(ctx context.Context, jobDescription
 		prompt := s.buildPrompt(keywordStrings, jobDescription)
 
 		// Stream the LLM responses
-		err := s.llmService.StreamGenerateContent(ctx, "deepseek-r1", prompt, func(chunk string, done bool) error {
+		err := s.llmService.StreamGenerateContent(ctx, "llama3.2", prompt, func(chunk string, done bool) error {
 			return handler(chunk, done)
 		})
 
@@ -115,4 +80,18 @@ The resume should include:
 
 Format the resume in Markdown.
 `, jobDescription)
+}
+
+// Helper function to join strings with commas and "and" for the last item
+func joinWithCommas(items []string) string {
+	if len(items) == 0 {
+		return ""
+	}
+	if len(items) == 1 {
+		return items[0]
+	}
+	if len(items) == 2 {
+		return items[0] + " and " + items[1]
+	}
+	return fmt.Sprintf("%s, and %s", joinWithCommas(items[:len(items)-1]), items[len(items)-1])
 }
