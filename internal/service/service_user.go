@@ -7,6 +7,7 @@ import (
 	"github.com/nikolai/ai-resume-builder/backend/internal/interfaces"
 	"github.com/nikolai/ai-resume-builder/backend/internal/models"
 	"github.com/nikolai/ai-resume-builder/backend/internal/repository"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -120,4 +121,31 @@ func (s *UserService) CreateUserOnboarding(ctx context.Context, data OnboardingD
 	}
 
 	return tx.Commit()
+}
+
+// GetUserWithDetails retrieves a user by ID with their work experience and education
+func (s *UserService) GetUserWithDetails(ctx context.Context, id uint) (*models.User, error) {
+	var user models.User
+
+	// Use a single query with proper indexing
+	err := s.db.WithContext(ctx).
+		Select("users.id, users.full_name, users.email, users.phone, users.location, users.title, users.summary").
+		Joins("LEFT JOIN work_experiences ON users.id = work_experiences.user_id").
+		Joins("LEFT JOIN educations ON users.id = educations.user_id").
+		Preload("WorkExperience", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, user_id, company, title, location, start_date, end_date, is_current, description").
+				Order("start_date DESC")
+		}).
+		Preload("Education", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, user_id, school, degree, field, location, start_date, end_date, is_current, description").
+				Order("start_date DESC")
+		}).
+		Where("users.id = ?", id).
+		First(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

@@ -39,7 +39,7 @@ func main() {
 	userService := service.NewUserService(userRepo, db)
 	keywordService := service.NewKeywordService(db)
 	llmService := service.NewLLMService()
-	resumeService := service.NewResumeService(db, keywordService, llmService)
+	resumeService := service.NewResumeService(db, keywordService, llmService, userService)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
