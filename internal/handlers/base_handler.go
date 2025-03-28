@@ -5,13 +5,13 @@ import (
 )
 
 // Handler contains all dependencies needed for the HTTP handlers
-type Handler struct {
-	service *service.Service
+type BaseHandler struct {
+	service *service.BaseService
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(service *service.Service) *Handler {
-	return &Handler{
+func NewBaseHandler(service *service.BaseService) *BaseHandler {
+	return &BaseHandler{
 		service: service,
 	}
 }

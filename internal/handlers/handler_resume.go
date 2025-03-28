@@ -13,6 +13,7 @@ type ResumeHandler struct {
 }
 
 type GenerateResumeRequest struct {
+	UserID         uint   `json:"userId" binding:"required"`
 	JobDescription string `json:"jobDescription" binding:"required"`
 }
 
@@ -47,7 +48,7 @@ func (h *ResumeHandler) GenerateResume(c *gin.Context) {
 	}
 
 	// Stream the resume generation
-	err := h.resumeService.GenerateResume(c.Request.Context(), req.JobDescription, func(chunk string, done bool) error {
+	err := h.resumeService.GenerateResume(c.Request.Context(), req.UserID, req.JobDescription, func(chunk string, done bool) error {
 		// Create the chunk response
 		chunkResponse := StreamChunk{
 			Chunk: chunk,

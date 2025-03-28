@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -28,7 +29,11 @@ func NewDatabaseConfig() *DatabaseConfig {
 
 // ConnectionString returns the formatted connection string
 func (c *DatabaseConfig) ConnectionString() string {
-	return os.Getenv("DATABASE_URL")
+	if url := os.Getenv("DATABASE_URL"); url != "" {
+		return url
+	}
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		c.Host, c.Port, c.User, c.Password, c.DBName, c.SSLMode)
 }
 
 // getEnvOrDefault returns environment variable value or default if not set
